@@ -28,7 +28,7 @@ SPEED = 10
 
 class SnakeGame:
     
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=640, h=560):
         self.w = w
         self.h = h
         # init display
@@ -43,9 +43,22 @@ class SnakeGame:
         self.snake = [self.head]
         self.shelve=[]
         self.shelves_coordinates=[]
-        for i in range(10):
+
+        for i in range(8):
             coordinate=(0,80+20*i)
             self.shelves_coordinates.append(coordinate)
+
+        for i in range(8):
+            coordinate=(0,2*80+20*8+20*i)
+            self.shelves_coordinates.append(coordinate)
+        
+        for j in range(1,8):
+            for i in range(8):
+                coordinate=(80*j,80+20*i)
+                self.shelves_coordinates.append(coordinate)
+                coordinate2=(80*j,2*80+20*8+20*i)
+                self.shelves_coordinates.append(coordinate2)
+
         for i in range(len(self.shelves_coordinates)):
             self.shelve.append(Point(self.shelves_coordinates[i][0],self.shelves_coordinates[i][1]))
         self.score = 0
@@ -56,7 +69,7 @@ class SnakeGame:
         x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
         self.food = Point(x, y)
-        if self.food in self.snake:
+        if self.food in self.snake or self.food in self.shelve:
             self._place_food()
         
     def play_step(self):
@@ -98,13 +111,16 @@ class SnakeGame:
         return game_over, self.score
     
     def _is_collision(self):
+        
         # hits boundary
         if self.head.x > self.w - BLOCK_SIZE or self.head.x < 0 or self.head.y > self.h - BLOCK_SIZE or self.head.y < 0:
             return True
         # hits itself
         if self.head in self.snake[1:]:
             return True
-        
+
+        if self.head in self.shelve[1:]:
+            return True
         return False
         
     def _update_ui(self):
