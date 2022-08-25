@@ -22,14 +22,13 @@ RED = (200,0,0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
-GRAY= (128,128,128)
 
 BLOCK_SIZE = 20
 SPEED = 40
 
 class SnakeGameAI:
 
-    def __init__(self, w=640, h=560):
+    def __init__(self, w=640, h=480):
         self.w = w
         self.h = h
         # init display
@@ -40,33 +39,14 @@ class SnakeGameAI:
 
 
     def reset(self):
-
         # init game state
-        self.direction = Direction.DOWN
-        
-        self.head = Point(40, 40)
-        self.snake = [self.head]
-        self.shelve=[]
-        self.shelves_coordinates=[]
+        self.direction = Direction.RIGHT
 
-        for i in range(8):
-            coordinate=(0,80+20*i)
-            self.shelves_coordinates.append(coordinate)
+        self.head = Point(self.w/2, self.h/2)
+        self.snake = [self.head,
+                      Point(self.head.x-BLOCK_SIZE, self.head.y),
+                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
 
-        for i in range(8):
-            coordinate=(0,2*80+20*8+20*i)
-            self.shelves_coordinates.append(coordinate)
-        
-        for j in range(1,4):
-            for i in range(8):
-                coordinate=(80*j*2,80+20*i)
-                self.shelves_coordinates.append(coordinate)
-                coordinate2=(80*j*2,2*80+20*8+20*i)
-                self.shelves_coordinates.append(coordinate2)
-
-        for i in range(len(self.shelves_coordinates)):
-            self.shelve.append(Point(self.shelves_coordinates[i][0],self.shelves_coordinates[i][1]))
-  
         self.score = 0
         self.food = None
         self._place_food()
@@ -77,7 +57,7 @@ class SnakeGameAI:
         x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
         y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
         self.food = Point(x, y)
-        if self.food in self.snake or self.food in self.shelve:
+        if self.food in self.snake:
             self._place_food()
 
 
@@ -88,17 +68,15 @@ class SnakeGameAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-        reward = 0
+        
         # 2. move
         self._move(action) # update the head
         self.snake.insert(0, self.head)
-        self.snake.pop()
-        reward -=1
-
-        # 3. check if game over
         
+        # 3. check if game over
+        reward = 0
         game_over = False
-        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
+        if self.is_collision():
             game_over = True
             reward = -10
             return reward, game_over, self.score
@@ -106,8 +84,10 @@ class SnakeGameAI:
         # 4. place new food or just move
         if self.head == self.food:
             self.score += 1
-            reward = 15
+            reward = 10
             self._place_food()
+        else:
+            self.snake.pop()
         
         # 5. update ui and clock
         self._update_ui()
@@ -126,9 +106,6 @@ class SnakeGameAI:
         if pt in self.snake[1:]:
             return True
 
-        if self.head in self.shelve[1:]:
-            return True
-
         return False
 
 
@@ -136,11 +113,8 @@ class SnakeGameAI:
         self.display.fill(BLACK)
 
         for pt in self.snake:
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
-
-        for pt in self.shelve:
-            pygame.draw.rect(self.display, GRAY, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE)) 
+            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
+            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
 
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
